@@ -37,6 +37,17 @@ try {
     exit;
 }
 
+// Dump all loaded providers
+echo "LOADED PROVIDERS: ";
+try {
+    foreach ($app->getLoadedProviders() as $provider => $val) {
+        echo $provider . ", ";
+    }
+    echo " | ";
+} catch (\Throwable $e) {
+    echo "ERROR loading providers: " . $e->getMessage() . " | ";
+}
+
 use Illuminate\Http\Request;
 
 try {
