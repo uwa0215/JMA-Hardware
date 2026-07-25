@@ -32,6 +32,7 @@
     "SESSION_DRIVER": "cookie",
     "QUEUE_CONNECTION": "sync",
     "DB_CONNECTION": "pgsql",
+    "DATABASE_URL": "postgresql://neondb_owner:npg_jq9rCeo0WVTF@ep-hidden-hall-azkojkai-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require",
     "LOG_CHANNEL": "stderr"
   }
 }
