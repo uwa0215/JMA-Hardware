@@ -25,8 +25,10 @@
     "DB_DATABASE": "/tmp/database.sqlite",
     "APP_CONFIG_CACHE": "/tmp/config.php",
     "VIEW_COMPILED_PATH": "/tmp",
+    "CACHE_STORE": "array",
     "CACHE_DRIVER": "array",
     "SESSION_DRIVER": "cookie",
+    "QUEUE_CONNECTION": "sync",
     "LOG_CHANNEL": "stderr"
   }
 }

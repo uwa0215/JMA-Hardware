@@ -23,21 +23,22 @@ class AppServiceProvider extends ServiceProvider
         Vite::prefetch(concurrency: 3);
 
         // Auto-initialize SQLite database in /tmp if running on Vercel
-        if (config('database.default') === 'sqlite') {
-            $dbPath = config('database.connections.sqlite.database');
-            if (str_starts_with($dbPath, '/tmp/') && !file_exists($dbPath)) {
-                if (!file_exists(dirname($dbPath))) {
-                    mkdir(dirname($dbPath), 0755, true);
-                }
-                touch($dbPath);
-                
-                try {
+        try {
+            if (config('database.default') === 'sqlite') {
+                $dbPath = config('database.connections.sqlite.database');
+                if (is_string($dbPath) && str_starts_with($dbPath, '/tmp/') && !file_exists($dbPath)) {
+                    $dir = dirname($dbPath);
+                    if (!file_exists($dir)) {
+                        mkdir($dir, 0755, true);
+                    }
+                    touch($dbPath);
+                    
                     \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
                     \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('SQLite auto-initialization failed: ' . $e->getMessage());
                 }
             }
+        } catch (\Throwable $e) {
+            error_log('SQLite auto-initialization failed: ' . $e->getMessage());
         }
     }
 }
