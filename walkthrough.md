@@ -101,5 +101,5 @@ Follow these quick commands to start the JMA Hardware Store system:
 
 ## Vercel Deployment Fix
 We resolved deployment errors on Vercel by stabilizing the underlying PHP runtime environment:
-- **Pinned PHP Runtime:** Set `"runtime": "vercel-php@0.7.3"` in `vercel.json` to ensure a consistent, working PHP 8.3 container.
-- **Node.js Environment Sync:** Added `"engines": { "node": "18.x" }` to `package.json` to prevent Vercel from using newer build environments (like Node.js 20+) which miss critical legacy OS libraries (`libssl.so.10`) required by the PHP builder.
+- **Upgraded PHP Runtime:** Set `"runtime": "vercel-php@0.9.0"` in `vercel.json`. The latest version of the community runtime natively supports modern Vercel Node environments (like Node 24) without legacy `libssl.so.10` errors.
+- **Removed Legacy Node Restrictions:** Removed the `"engines": { "node": "18.x" }` restriction from `package.json`, allowing Vercel to use its default, fully supported Node.js version.
