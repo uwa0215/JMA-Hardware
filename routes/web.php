@@ -12,13 +12,21 @@ use Inertia\Inertia;
 
 Route::get('/setup-database', function () {
     try {
-        \Illuminate\Support\Facades\Artisan::call('migrate:fresh', ['--force' => true]);
+        // Step 1: Drop all tables manually (avoids transaction issues)
+        $tables = \DB::select("SELECT tablename FROM pg_tables WHERE schemaname = 'public'");
+        foreach ($tables as $table) {
+            \DB::statement("DROP TABLE IF EXISTS \"{$table->tablename}\" CASCADE");
+        }
+        
+        // Step 2: Run migrations fresh
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
         $migrateOutput = \Illuminate\Support\Facades\Artisan::output();
         
+        // Step 3: Seed the database
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
         $seedOutput = \Illuminate\Support\Facades\Artisan::output();
         
-        return '<pre>Migration completed successfully!' . "\n\n" . $migrateOutput . "\n" . $seedOutput . '</pre>';
+        return '<pre>SUCCESS! Database setup complete.' . "\n\n--- Migrations ---\n" . $migrateOutput . "\n--- Seeding ---\n" . $seedOutput . '</pre>';
     } catch (\Exception $e) {
         return '<pre>Error: ' . $e->getMessage() . '</pre>';
     }
