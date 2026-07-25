@@ -11,26 +11,75 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/setup-database', function () {
+    $log = [];
+    
+    // Step 1: Check current schema state
     try {
-        // Nuclear option: drop and recreate the entire public schema
-        \DB::unprepared('DROP SCHEMA IF EXISTS public CASCADE');
-        \DB::unprepared('CREATE SCHEMA public');
-        
-        // Reconnect to get a clean connection state
-        \DB::reconnect();
-        
-        // Run migrations on the clean database
-        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-        $migrateOutput = \Illuminate\Support\Facades\Artisan::output();
-        
-        // Seed the database
-        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
-        $seedOutput = \Illuminate\Support\Facades\Artisan::output();
-        
-        return '<pre>SUCCESS! Database setup complete.' . "\n\n--- Migrations ---\n" . $migrateOutput . "\n--- Seeding ---\n" . $seedOutput . '</pre>';
+        $schemas = \DB::select("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'public'");
+        $log[] = 'Step 1 - Public schema exists: ' . (count($schemas) > 0 ? 'YES' : 'NO');
     } catch (\Exception $e) {
-        return '<pre>Error: ' . $e->getMessage() . "\n\nFile: " . $e->getFile() . ':' . $e->getLine() . '</pre>';
+        $log[] = 'Step 1 FAILED: ' . $e->getMessage();
     }
+    
+    // Step 2: Ensure public schema exists with proper permissions
+    try {
+        $pdo = \DB::connection()->getPdo();
+        $pdo->exec('CREATE SCHEMA IF NOT EXISTS public');
+        $log[] = 'Step 2 - Create schema: OK';
+    } catch (\Exception $e) {
+        $log[] = 'Step 2 FAILED: ' . $e->getMessage();
+    }
+    
+    // Step 3: Test basic table creation
+    try {
+        $pdo = \DB::connection()->getPdo();
+        $pdo->exec('DROP TABLE IF EXISTS _test_connectivity');
+        $pdo->exec('CREATE TABLE _test_connectivity (id serial primary key, name text)');
+        $pdo->exec('DROP TABLE _test_connectivity');
+        $log[] = 'Step 3 - Table creation test: OK';
+    } catch (\Exception $e) {
+        $log[] = 'Step 3 FAILED: ' . $e->getMessage();
+    }
+    
+    // Step 4: Drop all existing tables
+    try {
+        $tables = \DB::select("SELECT tablename FROM pg_tables WHERE schemaname = 'public'");
+        $log[] = 'Step 4 - Found ' . count($tables) . ' existing tables';
+        foreach ($tables as $table) {
+            \DB::connection()->getPdo()->exec("DROP TABLE IF EXISTS \"{$table->tablename}\" CASCADE");
+        }
+        $log[] = 'Step 4 - All tables dropped: OK';
+    } catch (\Exception $e) {
+        $log[] = 'Step 4 FAILED: ' . $e->getMessage();
+    }
+    
+    // Step 5: Reconnect to clear connection state
+    try {
+        \DB::reconnect();
+        $log[] = 'Step 5 - Reconnect: OK';
+    } catch (\Exception $e) {
+        $log[] = 'Step 5 FAILED: ' . $e->getMessage();
+    }
+    
+    // Step 6: Run migrations
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        $log[] = 'Step 6 - Migrations: OK';
+        $log[] = \Illuminate\Support\Facades\Artisan::output();
+    } catch (\Exception $e) {
+        $log[] = 'Step 6 FAILED: ' . $e->getMessage();
+    }
+    
+    // Step 7: Seed database
+    try {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+        $log[] = 'Step 7 - Seeding: OK';
+        $log[] = \Illuminate\Support\Facades\Artisan::output();
+    } catch (\Exception $e) {
+        $log[] = 'Step 7 FAILED: ' . $e->getMessage();
+    }
+    
+    return '<pre>' . implode("\n", $log) . '</pre>';
 });
 
 Route::get('/debug-db', function () {
