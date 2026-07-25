@@ -4,7 +4,12 @@ ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
 
-// Let's print debug progress to see where it crashes
+// Disable output buffering and flush all buffers immediately
+ob_implicit_flush(true);
+while (ob_get_level() > 0) {
+    ob_end_clean();
+}
+
 echo "DEBUG_START | ";
 
 $autoloadPath = __DIR__ . '/../vendor/autoload.php';
