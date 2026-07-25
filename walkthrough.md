@@ -96,3 +96,10 @@ Follow these quick commands to start the JMA Hardware Store system:
 4. **Log in** using:
    - Email: `admin@jma.com` (or `cashier@jma.com`)
    - Password: `password`
+
+---
+
+## Vercel Deployment Fix
+We resolved deployment errors on Vercel by stabilizing the underlying PHP runtime environment:
+- **Pinned PHP Runtime:** Set `"runtime": "vercel-php@0.7.3"` in `vercel.json` to ensure a consistent, working PHP 8.3 container.
+- **Node.js Environment Sync:** Added `"engines": { "node": "18.x" }` to `package.json` to prevent Vercel from using newer build environments (like Node.js 20+) which miss critical legacy OS libraries (`libssl.so.10`) required by the PHP builder.
