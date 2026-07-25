@@ -3,18 +3,39 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+// --- Neon/Vercel: Parse DATABASE_URL into individual components ---
+$pgHost = env('DB_HOST', '127.0.0.1');
+$pgPort = env('DB_PORT', '5432');
+$pgDatabase = env('DB_DATABASE', 'laravel');
+$pgUsername = env('DB_USERNAME', 'root');
+$pgPassword = env('DB_PASSWORD', '');
+$pgSslmode = env('DB_SSLMODE', 'prefer');
+
+$databaseUrl = env('DATABASE_URL') ?: env('POSTGRES_URL') ?: env('DB_URL');
+if ($databaseUrl) {
+    $parsed = parse_url($databaseUrl);
+    if ($parsed !== false) {
+        $pgHost = $parsed['host'] ?? $pgHost;
+        $pgPort = $parsed['port'] ?? $pgPort;
+        $pgDatabase = ltrim($parsed['path'] ?? '/', '/') ?: $pgDatabase;
+        $pgUsername = isset($parsed['user']) ? urldecode($parsed['user']) : $pgUsername;
+        $pgPassword = isset($parsed['pass']) ? urldecode($parsed['pass']) : $pgPassword;
+        $pgSslmode = 'require';
+    }
+}
+
+// Neon SNI workaround: extract endpoint ID from hostname and set PGOPTIONS
+if (str_contains($pgHost, 'neon.tech') && preg_match('/^(ep-[^.]+)/', $pgHost, $matches)) {
+    putenv('PGOPTIONS=project=' . $matches[1]);
+}
+// --- End Neon/Vercel parsing ---
+
 return [
 
     /*
     |--------------------------------------------------------------------------
     | Default Database Connection Name
     |--------------------------------------------------------------------------
-    |
-    | Here you may specify which of the database connections below you wish
-    | to use as your default connection for database operations. This is
-    | the connection which will be utilized unless another connection
-    | is explicitly specified when you execute a query / statement.
-    |
     */
 
     'default' => env('DB_CONNECTION', 'pgsql'),
@@ -23,18 +44,12 @@ return [
     |--------------------------------------------------------------------------
     | Database Connections
     |--------------------------------------------------------------------------
-    |
-    | Below are all of the database connections defined for your application.
-    | An example configuration is provided for each database system which
-    | is supported by Laravel. You're free to add / remove connections.
-    |
     */
 
     'connections' => [
 
         'sqlite' => [
             'driver' => 'sqlite',
-            'url' => env('DATABASE_URL'),
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
@@ -46,7 +61,6 @@ return [
 
         'mysql' => [
             'driver' => 'mysql',
-            'url' => env('DATABASE_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
             'database' => env('DB_DATABASE', 'laravel'),
@@ -66,7 +80,6 @@ return [
 
         'mariadb' => [
             'driver' => 'mariadb',
-            'url' => env('DATABASE_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
             'database' => env('DB_DATABASE', 'laravel'),
@@ -86,18 +99,18 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DATABASE_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
+            'host' => $pgHost,
+            'port' => $pgPort,
+            'database' => $pgDatabase,
+            'username' => $pgUsername,
+            'password' => $pgPassword,
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'sslmode' => $pgSslmode,
         ],
+
 
         'sqlsrv' => [
             'driver' => 'sqlsrv',

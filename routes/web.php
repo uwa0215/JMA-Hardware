@@ -17,12 +17,18 @@ Route::get('/setup-database', function () {
 });
 
 Route::get('/debug-db', function () {
+    $pgsql = config('database.connections.pgsql');
     return [
         'DB_CONNECTION' => config('database.default'),
-        'DB_URL_RAW' => env('DB_URL') ? 'SET' : 'MISSING',
-        'DATABASE_URL_RAW' => env('DATABASE_URL') ? 'SET' : 'MISSING',
-        'DB_HOST' => config('database.connections.pgsql.host'),
-        'DB_DATABASE' => config('database.connections.pgsql.database'),
+        'DATABASE_URL_SET' => env('DATABASE_URL') ? 'YES' : 'NO',
+        'POSTGRES_URL_SET' => env('POSTGRES_URL') ? 'YES' : 'NO',
+        'DB_URL_SET' => env('DB_URL') ? 'YES' : 'NO',
+        'RESOLVED_HOST' => $pgsql['host'] ?? 'not set',
+        'RESOLVED_PORT' => $pgsql['port'] ?? 'not set',
+        'RESOLVED_DATABASE' => $pgsql['database'] ?? 'not set',
+        'RESOLVED_USERNAME' => $pgsql['username'] ?? 'not set',
+        'RESOLVED_SSLMODE' => $pgsql['sslmode'] ?? 'not set',
+        'PGOPTIONS' => getenv('PGOPTIONS') ?: 'not set',
     ];
 });
 
