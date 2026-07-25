@@ -32,7 +32,6 @@
     "SESSION_DRIVER": "cookie",
     "QUEUE_CONNECTION": "sync",
     "DB_CONNECTION": "pgsql",
-    "DATABASE_URL": "postgres://username:password@host:5432/database_name",
-
+    "LOG_CHANNEL": "stderr"
   }
 }
