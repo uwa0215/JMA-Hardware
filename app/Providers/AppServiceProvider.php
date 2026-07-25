@@ -20,11 +20,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (str_contains(request()->getHost(), 'vercel.app') || app()->environment('production')) {
+        $host = request()->header('X-Forwarded-Host', request()->getHost());
+        if (str_contains($host, 'vercel.app') || isset($_SERVER['VERCEL'])) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
             request()->server->set('HTTPS', 'on');
-            config(['app.url' => 'https://' . request()->getHost()]);
-            config(['app.asset_url' => 'https://' . request()->getHost()]);
+            config(['app.url' => 'https://' . $host]);
+            config(['app.asset_url' => 'https://' . $host]);
         }
 
         Vite::prefetch(concurrency: 3);
