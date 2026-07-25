@@ -35,3 +35,8 @@
   - [x] Create test case for POS checkout stock deduction
   - [x] Run tests
   - [x] Start server and run Vite to verify all pages manually
+
+- [x] 6. Performance Optimization
+  - [x] Add regions configuration to vercel.json
+  - [x] Optimize DashboardController queries
+

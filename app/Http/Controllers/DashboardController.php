@@ -66,13 +66,23 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // 5. Sales Trend (last 7 days)
+        // 5. Sales Trend (last 7 days) - optimized to a single query
+        $startDate = Carbon::now()->subDays(6)->startOfDay();
+        $salesTrendData = Sale::where('status', 'completed')
+            ->where('created_at', '>=', $startDate)
+            ->selectRaw('DATE(created_at) as date_str, SUM(grand_total) as total')
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->get()
+            ->pluck('total', 'date_str')
+            ->mapWithKeys(function ($item, $key) {
+                return [Carbon::parse($key)->toDateString() => $item];
+            });
+
         $salesTrend = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
-            $total = Sale::where('status', 'completed')
-                ->whereDate('created_at', $date->toDateString())
-                ->sum('grand_total');
+            $dateString = $date->toDateString();
+            $total = $salesTrendData->get($dateString) ?? 0;
             
             $salesTrend[] = [
                 'day' => $date->format('D'),
