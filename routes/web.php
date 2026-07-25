@@ -11,9 +11,17 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/setup-database', function () {
-    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-    \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
-    return 'Database migration and seeding completed successfully!';
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate:fresh', ['--force' => true]);
+        $migrateOutput = \Illuminate\Support\Facades\Artisan::output();
+        
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+        $seedOutput = \Illuminate\Support\Facades\Artisan::output();
+        
+        return '<pre>Migration completed successfully!' . "\n\n" . $migrateOutput . "\n" . $seedOutput . '</pre>';
+    } catch (\Exception $e) {
+        return '<pre>Error: ' . $e->getMessage() . '</pre>';
+    }
 });
 
 Route::get('/debug-db', function () {
