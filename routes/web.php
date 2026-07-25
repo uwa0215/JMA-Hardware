@@ -12,23 +12,24 @@ use Inertia\Inertia;
 
 Route::get('/setup-database', function () {
     try {
-        // Step 1: Drop all tables manually (avoids transaction issues)
-        $tables = \DB::select("SELECT tablename FROM pg_tables WHERE schemaname = 'public'");
-        foreach ($tables as $table) {
-            \DB::statement("DROP TABLE IF EXISTS \"{$table->tablename}\" CASCADE");
-        }
+        // Nuclear option: drop and recreate the entire public schema
+        \DB::unprepared('DROP SCHEMA IF EXISTS public CASCADE');
+        \DB::unprepared('CREATE SCHEMA public');
         
-        // Step 2: Run migrations fresh
+        // Reconnect to get a clean connection state
+        \DB::reconnect();
+        
+        // Run migrations on the clean database
         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
         $migrateOutput = \Illuminate\Support\Facades\Artisan::output();
         
-        // Step 3: Seed the database
+        // Seed the database
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
         $seedOutput = \Illuminate\Support\Facades\Artisan::output();
         
         return '<pre>SUCCESS! Database setup complete.' . "\n\n--- Migrations ---\n" . $migrateOutput . "\n--- Seeding ---\n" . $seedOutput . '</pre>';
     } catch (\Exception $e) {
-        return '<pre>Error: ' . $e->getMessage() . '</pre>';
+        return '<pre>Error: ' . $e->getMessage() . "\n\nFile: " . $e->getFile() . ':' . $e->getLine() . '</pre>';
     }
 });
 
