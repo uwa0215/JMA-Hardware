@@ -16,6 +16,16 @@ Route::get('/setup-database', function () {
     return 'Database migration and seeding completed successfully!';
 });
 
+Route::get('/debug-db', function () {
+    return [
+        'DB_CONNECTION' => config('database.default'),
+        'DB_URL_RAW' => env('DB_URL') ? 'SET' : 'MISSING',
+        'DATABASE_URL_RAW' => env('DATABASE_URL') ? 'SET' : 'MISSING',
+        'DB_HOST' => config('database.connections.pgsql.host'),
+        'DB_DATABASE' => config('database.connections.pgsql.database'),
+    ];
+});
+
 Route::get('/', function () {
     return redirect()->route('login');
 });
