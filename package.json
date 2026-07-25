@@ -3,7 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "tsc && vite build && node -e \"const fs = require('fs'); ['bootstrap/cache/packages.php', 'bootstrap/cache/services.php'].forEach(f => fs.existsSync(f) && fs.unlinkSync(f))\"",
+        "build": "tsc && vite build",
         "dev": "vite",
         "lint": "eslint resources/js --ext .js,.jsx,.ts,.tsx --ignore-path .gitignore --fix"
     },
